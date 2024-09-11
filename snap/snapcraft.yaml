@@ -1,0 +1,14 @@
+name: cantainer
+base: core24 
+version: '0.1.0'
+summary: A super simple educational container orchestrator
+description: |
+  This package aims at...
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  my-part:
+    # See 'snapcraft plugins'
+    plugin: nil

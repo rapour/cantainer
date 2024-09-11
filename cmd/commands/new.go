@@ -1,9 +1,9 @@
-package cmd
+package commands
 
 import (
 	"os"
 
-	"github.com/rapour/cantainer/internal"
+	"github.com/rapour/cantainer"
 	"github.com/spf13/cobra"
 )
 
@@ -16,11 +16,11 @@ var runCmd = &cobra.Command{
 	Short: "creates and runs a new container",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		tempDir := internal.CreateTempDir()
+		tempDir := cantainer.CreateTempDir()
 		defer os.RemoveAll(tempDir)
 
-		internal.Extract(tempDir)
-		internal.Chroot(tempDir, "/bin/busybox", "/bin/ash")
+		cantainer.Extract(tempDir)
+		cantainer.Chroot(tempDir, "/bin/busybox", "/bin/ash")
 
 	},
 }
