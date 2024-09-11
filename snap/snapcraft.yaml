@@ -9,6 +9,44 @@ grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: devmode # use 'strict' once you have the right plugs and slots
 
 parts:
-  my-part:
-    # See 'snapcraft plugins'
+  build-deps:
     plugin: nil
+    build-snaps:
+      - go/1.22/stable
+    build-packages:
+      - autoconf
+      - automake
+      - autopoint
+      - autotools-dev
+      - bison
+      - btrfs-progs
+      - libbtrfs-dev
+      - build-essential
+      - curl
+      - flex
+      - git
+      - libjansson-dev
+      - liblz4-dev
+      - libnetfilter-conntrack-dev
+      - libnetfilter-conntrack3
+      - libnfnetlink-dev
+      - libseccomp-dev
+      - libtool
+      - pkg-config
+      - rsync
+      - tcl
+  dqlite:
+    after: [build-deps]
+    plugin: nil
+    source: build/hack
+    override-prime: ""
+    override-build: |
+      DQLITE_STAGING_DIR="${SNAPCRAFT_STAGE}/static-dqlite-deps"
+      if [ -d "${DQLITE_STAGING_DIR}" ]; then
+        rm -rf "${DQLITE_STAGING_DIR}"
+      fi
+      mkdir "${DQLITE_STAGING_DIR}"
+      cp -rv * "${DQLITE_STAGING_DIR}"
+
+      # Build dqlite libraries on the staging area
+      "${DQLITE_STAGING_DIR}/static-dqlite.sh"

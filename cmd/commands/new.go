@@ -8,11 +8,11 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(newCmd)
 }
 
-var runCmd = &cobra.Command{
-	Use:   "run",
+var newCmd = &cobra.Command{
+	Use:   "new",
 	Short: "creates and runs a new container",
 	Run: func(cmd *cobra.Command, args []string) {
 
