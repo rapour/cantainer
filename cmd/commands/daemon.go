@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,15 +12,17 @@ import (
 )
 
 var (
-	seeds []string
-	dir   string
+	seeds  []string
+	dir    string
+	socket cantainer.Socket
 )
 
 func init() {
 	rootCmd.AddCommand(daemonCmd)
 
-	daemonCmd.Flags().StringSliceVarP(&seeds, "seeds", "s", nil, "seed servcer to connect (required)")
+	daemonCmd.Flags().StringSliceVarP(&seeds, "seeds", "s", nil, "seed server to connect (required)")
 	daemonCmd.Flags().StringVarP(&dir, "dir", "d", "/tmp/cantainer-dqlite", "data directory")
+	daemonCmd.Flags().UintVarP(&socket.Port, "port", "p", 9000, "port number that the daemon will listen on")
 
 	daemonCmd.MarkFlagRequired("seeds")
 }
@@ -33,8 +36,10 @@ var daemonCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		slog.Info("obtained host address", slog.Any("address", addr))
+		socket.Address = addr
 
-		state, err := cantainer.NewState(addr, dir, seeds)
+		state, err := cantainer.NewState(socket, dir, seeds)
 		if err != nil {
 			return err
 		}
