@@ -15,7 +15,7 @@ type state struct {
 func NewState(address string, dir string, seeds []string) (*state, error) {
 
 	if _, err := os.Stat(dir); err != nil {
-		if err := os.MkdirAll(baseDIR, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0755); err != nil {
 			return nil, err
 		}
 	}
