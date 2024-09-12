@@ -21,12 +21,10 @@ type state struct {
 
 func NewState(socket Socket, dir string, seeds []string) (*state, error) {
 
-	if err := os.RemoveAll(dir); err != nil {
-		return nil, err
-	}
-
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, err
+	if _, err := os.Stat(dir); err != nil {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, err
+		}
 	}
 
 	options := []app.Option{
@@ -34,7 +32,7 @@ func NewState(socket Socket, dir string, seeds []string) (*state, error) {
 		app.WithLogFunc(func(l client.LogLevel, format string, a ...interface{}) {
 			slog.Info(fmt.Sprintf("%s: %s\n", l.String(), format), a...)
 		}),
-		app.WithNetworkLatency(50 * time.Millisecond),
+		app.WithNetworkLatency(10 * time.Millisecond),
 	}
 
 	var remoteSeeds []string
@@ -83,6 +81,7 @@ func (s *state) RegisterNode() error {
 
 func (s *state) Shutdown(ctx context.Context) error {
 
+	slog.Info("running state shutdown")
 	err := s.app.Handover(ctx)
 
 	closeErr := s.app.Close()

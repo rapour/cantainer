@@ -103,6 +103,15 @@ func RemoveFromVXLan(name string, address string) error {
 	checkCmd.Stdout = &stdOut
 
 	if err := checkCmd.Run(); err != nil {
+
+		// TODO: fix the error (in some cases MAC doesn't match)
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			if exiterr.ExitCode() == 255 {
+				slog.Warn("the entry didn't found", slog.String("error", exiterr.Error()))
+				return nil
+			}
+		}
+
 		errStr := strings.TrimSuffix(stdErr.String(), "\n")
 		return fmt.Errorf("error executing remove from vxlan command: %v [%s]", err, errStr)
 	}

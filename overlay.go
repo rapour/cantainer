@@ -38,6 +38,12 @@ func (onc *overlayNetworkController) Run(ctx context.Context) error {
 		return err
 	}
 
+	cli, err := onc.state.app.Client(ctx)
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+
 	ticker := time.NewTicker(onc.tickInterval)
 
 	for {
@@ -68,6 +74,7 @@ func (onc *overlayNetworkController) Run(ctx context.Context) error {
 						slog.Error("error removing peer address", slog.String("error", err.Error()))
 						continue
 					}
+
 					delete(onc.CurrentPeerAddresses, currentPeer)
 				}
 			}
