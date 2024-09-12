@@ -89,8 +89,7 @@ func AddRemoteToVXLan(name string, address string) error {
 		return fmt.Errorf("error executing add to vxlan command: %v [%s]", err, errStr)
 	}
 
-	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
-
+	slog.Info("added node to vxlan", slog.String("address", address))
 	return nil
 }
 
@@ -108,7 +107,6 @@ func RemoveFromVXLan(name string, address string) error {
 		return fmt.Errorf("error executing remove from vxlan command: %v [%s]", err, errStr)
 	}
 
-	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
-
+	slog.Info("removed node from vxlan", slog.String("address", address))
 	return nil
 }

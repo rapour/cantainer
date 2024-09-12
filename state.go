@@ -3,6 +3,7 @@ package cantainer
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -14,6 +15,7 @@ import (
 
 type state struct {
 	db     *sql.DB
+	app    *app.App
 	socket Socket
 }
 
@@ -68,12 +70,31 @@ func NewState(socket Socket, dir string, seeds []string) (*state, error) {
 
 	return &state{
 		db:     db,
+		app:    app,
 		socket: socket,
 	}, nil
 }
 
 func (s *state) RegisterNode() error {
 	_, err := s.db.Exec("INSERT INTO nodes VALUES (?, ?);", s.socket.Address, s.socket.Port)
+
+	return err
+}
+
+func (s *state) Shutdown(ctx context.Context) error {
+
+	err := s.app.Handover(ctx)
+
+	closeErr := s.app.Close()
+	if closeErr != nil {
+		err = errors.Join(err, closeErr)
+	}
+
+	return err
+}
+
+func (s *state) UnregisterNode() error {
+	_, err := s.db.Exec("DELETE FROM nodes WHERE address=?", s.socket.Address)
 
 	return err
 }
