@@ -8,6 +8,8 @@ import (
 
 func RunDaemon(ctx context.Context, state *state) error {
 
+	onc := NewOverlayNetworkController(state)
+
 	if err := state.RegisterNode(); err != nil {
 		return err
 	}
@@ -20,6 +22,10 @@ func RunDaemon(ctx context.Context, state *state) error {
 		case <-gCtx.Done():
 			return nil
 		}
+	})
+
+	g.Go(func() error {
+		return onc.Run(gCtx)
 	})
 
 	return g.Wait()

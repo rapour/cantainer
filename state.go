@@ -30,7 +30,7 @@ func NewState(socket Socket, dir string, seeds []string) (*state, error) {
 	options := []app.Option{
 		app.WithAddress(socket.ExtendedAddress()),
 		app.WithLogFunc(func(l client.LogLevel, format string, a ...interface{}) {
-			slog.Debug(fmt.Sprintf("%s: %s\n", l.String(), format), a...)
+			slog.Info(fmt.Sprintf("%s: %s\n", l.String(), format), a...)
 		}),
 		app.WithNetworkLatency(50 * time.Millisecond),
 	}
@@ -76,4 +76,31 @@ func (s *state) RegisterNode() error {
 	_, err := s.db.Exec("INSERT INTO nodes VALUES (?, ?);", s.socket.Address, s.socket.Port)
 
 	return err
+}
+
+func (s *state) PeerAddresses() (map[string]bool, error) {
+
+	rows, err := s.db.Query("SELECT address from nodes")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := make(map[string]bool)
+	for rows.Next() {
+		var addr string
+		if err := rows.Scan(&addr); err != nil {
+			return nil, err
+		}
+		results[addr] = true
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// remove node's own ip address from the peers list
+	delete(results, s.socket.Address)
+
+	return results, nil
 }

@@ -3,6 +3,7 @@ package cantainer
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"strings"
 )
@@ -34,4 +35,80 @@ func GetAddress() (string, error) {
 	}
 
 	return strings.TrimSuffix(stdOut.String(), "\n"), nil
+}
+
+func CreateBridge(name string) error {
+
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/bridge.sh %s`, name))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error executing bridge command: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
+}
+
+func CreateVXLan(name string, id int, bridgeName string) error {
+
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/vxlan.sh %s %s %d`, name, bridgeName, id))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error executing vxlan command: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
+}
+
+func AddRemoteToVXLan(name string, address string) error {
+
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/vxlan-add-remote.sh %s %s`, name, address))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error executing add to vxlan command: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
+}
+
+func RemoveFromVXLan(name string, address string) error {
+
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/vxlan-remove-remote.sh %s %s`, name, address))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error executing remove from vxlan command: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
 }
