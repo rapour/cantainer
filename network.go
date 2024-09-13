@@ -17,6 +17,36 @@ func (s Socket) ExtendedAddress() string {
 	return fmt.Sprintf("%s:%d", s.Address, s.Port)
 }
 
+func CreateNetworkNamespace(name string) error {
+	checkCmd := exec.Command("bash", "-c", fmt.Sprintf("ip netns add %s", name))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error executing add netns command: %v [%s]", err, errStr)
+	}
+	return nil
+}
+
+func DeleteNetworkNamespace(name string) error {
+	checkCmd := exec.Command("bash", "-c", fmt.Sprintf("ip netns delete %s", name))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error executing add netns command: %v [%s]", err, errStr)
+	}
+	return nil
+}
+
 func GetAddress() (string, error) {
 
 	cmd := exec.Command(`bash`, `-c`, `ip route | grep default | awk '{print $9}'`)

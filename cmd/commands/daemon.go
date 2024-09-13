@@ -47,6 +47,8 @@ var daemonCmd = &cobra.Command{
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
 
-		return cantainer.RunDaemon(ctx, state)
+		core := cantainer.NewCore(state)
+
+		return core.RunDaemon(ctx)
 	},
 }

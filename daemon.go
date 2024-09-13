@@ -9,11 +9,19 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func RunDaemon(ctx context.Context, state *state) error {
+type core struct {
+	state *state
+}
 
-	onc := NewOverlayNetworkController(state)
+func NewCore(state *state) *core {
+	return &core{state: state}
+}
 
-	if err := state.RegisterNode(); err != nil {
+func (c *core) RunDaemon(ctx context.Context) error {
+
+	onc := NewOverlayNetworkController(c.state)
+
+	if err := c.state.RegisterNode(); err != nil {
 		return err
 	}
 
@@ -25,11 +33,11 @@ func RunDaemon(ctx context.Context, state *state) error {
 
 		case <-gCtx.Done():
 
-			err := state.UnregisterNode()
+			err := c.state.UnregisterNode()
 			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			stateShutdownErr := state.Shutdown(shutdownCtx)
+			stateShutdownErr := c.state.Shutdown(shutdownCtx)
 			if stateShutdownErr != nil {
 				err = errors.Join(err, stateShutdownErr)
 			}
