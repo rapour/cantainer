@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-func Chroot(root string, call string, options ...string) {
+func NewContainer(name string, root string, call string, options ...string) {
 
 	cmd := exec.Command("/proc/self/exe", append([]string{"child", root, call}, options...)...)
 
@@ -18,7 +18,17 @@ func Chroot(root string, call string, options ...string) {
 		Unshareflags: syscall.CLONE_NEWNS,
 	}
 
-	err := cmd.Run()
+	handle, err := GetNetNamespaceHandleFromName(name)
+	if err != nil {
+		panic(err)
+	}
+
+	err = SetNamespace(handle)
+	if err != nil {
+		panic(err)
+	}
+
+	err = cmd.Run()
 	if err != nil {
 		panic(err)
 	}

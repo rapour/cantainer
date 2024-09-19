@@ -5,8 +5,15 @@ import (
 	"fmt"
 	"log/slog"
 	"os/exec"
+	"path/filepath"
 	"strings"
+
+	"golang.org/x/sys/unix"
 )
+
+type NsHandle int
+
+const bindMountPath = "/run/netns" /* Bind mount path for named netns */
 
 type Socket struct {
 	Address string
@@ -148,4 +155,26 @@ func RemoveFromVXLan(name string, address string) error {
 
 	slog.Info("removed node from vxlan", slog.String("address", address))
 	return nil
+}
+
+// GetNetNamespaceHandleFromName gets a handle to a named network namespace such as one
+// created by `ip netns add`.
+func GetNetNamespaceHandleFromName(name string) (NsHandle, error) {
+	return GetNetNamespaceHanddleFromPath(filepath.Join(bindMountPath, name))
+}
+
+// GetNetNamespaceHanddleFromPath gets a handle to a network namespace
+// identified by the path
+func GetNetNamespaceHanddleFromPath(path string) (NsHandle, error) {
+	fd, err := unix.Open(path, unix.O_RDONLY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return -1, err
+	}
+	return NsHandle(fd), nil
+}
+
+// SetNamespace sets the current network namespace to the namespace represented
+// by NsHandle.
+func SetNamespace(ns NsHandle) error {
+	return unix.Setns(int(ns), unix.CLONE_NEWNET)
 }

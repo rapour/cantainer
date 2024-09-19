@@ -16,11 +16,17 @@ var newCmd = &cobra.Command{
 	Short: "creates and runs a new container",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		tempDir, _ := cantainer.CreateTempDir()
+		tempDir, cName := cantainer.CreateTempDir()
 		defer os.RemoveAll(tempDir)
 
+		err := cantainer.CreateNetworkNamespace(cName)
+		if err != nil {
+			panic(err)
+		}
+		defer cantainer.DeleteNetworkNamespace(cName)
+
 		cantainer.Extract(tempDir)
-		cantainer.Chroot(tempDir, "/bin/busybox", "/bin/ash")
+		cantainer.NewContainer(cName, tempDir, "/bin/busybox", "/bin/ash")
 
 	},
 }
