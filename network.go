@@ -157,6 +157,50 @@ func RemoveFromVXLan(name string, address string) error {
 	return nil
 }
 
+func RemoveVethPair(name string) error {
+
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/veth-remove.sh %s`, name))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error executing veth command: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
+
+}
+
+func CreateVethPair(name string) error {
+
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/veth-add.sh %s`, name))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error executing veth command: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
+
+}
+
+func ConnectNetworkNamespaceToOverlayNetwork(namespace string, vxlanName string) {
+
+}
+
 // GetNetNamespaceHandleFromName gets a handle to a named network namespace such as one
 // created by `ip netns add`.
 func GetNetNamespaceHandleFromName(name string) (NsHandle, error) {
