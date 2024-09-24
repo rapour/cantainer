@@ -197,6 +197,45 @@ func CreateVethPair(name string) error {
 
 }
 
+func AddVethToBridge(vethName string, bridgeName string) error {
+
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/veth-add-to-bridge.sh %s %s`, vethName, bridgeName))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error adding veth to bridge: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
+}
+
+func AddVethToNamespace(namespace string, vethName string) error {
+
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/veth-add-to-namespace.sh %s %s`, vethName, vethName))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error adding veth to namespace: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
+
+}
+
 func ConnectNetworkNamespaceToOverlayNetwork(namespace string, vxlanName string) {
 
 }
