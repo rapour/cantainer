@@ -19,11 +19,14 @@ var newCmd = &cobra.Command{
 		tempDir, cName := cantainer.CreateTempDir()
 		defer os.RemoveAll(tempDir)
 
-		err := cantainer.CreateNetworkNamespace(cName)
-		if err != nil {
+		if err := cantainer.CreateNetworkNamespace(cName); err != nil {
 			panic(err)
 		}
 		defer cantainer.DeleteNetworkNamespace(cName)
+
+		if err := cantainer.ConnectNetworkNamespaceToBridge(cName, cantainer.BRIDGE_NAME); err != nil {
+			panic(err)
+		}
 
 		cantainer.Extract(tempDir)
 		cantainer.NewContainer(cName, tempDir, "/bin/busybox", "/bin/ash")

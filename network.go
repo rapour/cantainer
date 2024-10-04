@@ -168,7 +168,7 @@ func RemoveVethPair(name string) error {
 
 	if err := checkCmd.Run(); err != nil {
 		errStr := strings.TrimSuffix(stdErr.String(), "\n")
-		return fmt.Errorf("error executing veth command: %v [%s]", err, errStr)
+		return fmt.Errorf("error executing remove veth command: %v [%s]", err, errStr)
 	}
 
 	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
@@ -188,7 +188,7 @@ func CreateVethPair(name string) error {
 
 	if err := checkCmd.Run(); err != nil {
 		errStr := strings.TrimSuffix(stdErr.String(), "\n")
-		return fmt.Errorf("error executing veth command: %v [%s]", err, errStr)
+		return fmt.Errorf("error executing create veth command: %v [%s]", err, errStr)
 	}
 
 	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
@@ -236,8 +236,23 @@ func AddVethToNamespace(namespace string, vethName string) error {
 
 }
 
-func ConnectNetworkNamespaceToOverlayNetwork(namespace string, vxlanName string) {
+func ConnectNetworkNamespaceToBridge(namespace string, bridgeName string) error {
 
+	vethName := fmt.Sprintf("%s", namespace)
+
+	if err := CreateVethPair(vethName); err != nil {
+		return err
+	}
+
+	if err := AddVethToNamespace(namespace, vethName); err != nil {
+		return err
+	}
+
+	if err := AddVethToBridge(vethName, bridgeName); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetNetNamespaceHandleFromName gets a handle to a named network namespace such as one

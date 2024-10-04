@@ -18,9 +18,10 @@ then
 fi
 
 if sudo ip link list type veth | grep -qw "${VETH_NAME}-out" | grep -qw "${BRIDGE_NAME}" ; then 
-    echo "bridge "${BRIDGE_NAME} is already the master of ${VETH_NAME}-out"
+    echo "bridge ${BRIDGE_NAME} is already the master of ${VETH_NAME}-out"
 else 
     sudo ip link set ${VETH_NAME}-out down
     sudo ip link set ${VETH_NAME}-out master ${BRIDGE_NAME}
     sudo ip link set ${VETH_NAME}-out up
+    echo "veth ${VETH_NAME} plugged into bridge ${BRIDGE_NAME}"
 fi
