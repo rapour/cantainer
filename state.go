@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"os"
 	"time"
 
@@ -66,6 +67,11 @@ func NewState(socket Socket, dir string, seeds []string) (*state, error) {
 		return nil, err
 	}
 
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS containers (address TEXT UNIQUE, node TEXT);")
+	if err != nil {
+		return nil, err
+	}
+
 	return &state{
 		db:     db,
 		app:    app,
@@ -88,6 +94,20 @@ func (s *state) Shutdown(ctx context.Context) error {
 	if closeErr != nil {
 		err = errors.Join(err, closeErr)
 	}
+
+	return err
+}
+
+func (s *state) RegisterContainer(address *netip.Addr) error {
+
+	_, err := s.db.Exec("INSERT INTO containers VALUES (?, ?);", address, s.socket.ExtendedAddress())
+
+	return err
+}
+
+func (s *state) UnregisterContainer(address *netip.Addr) error {
+
+	_, err := s.db.Exec("DELETE FROM containers WHERE address=?", address.String())
 
 	return err
 }
@@ -123,4 +143,26 @@ func (s *state) PeerAddresses() (map[string]bool, error) {
 	delete(results, s.socket.Address)
 
 	return results, nil
+}
+
+// TODO: Get container addresses for a specific subnet using SQL
+func (s *state) Containers() ([]netip.Addr, error) {
+
+	rows, err := s.db.Query("SELECT address from containers")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := []netip.Addr{}
+	for rows.Next() {
+		var addr netip.Addr
+		if err := rows.Scan(&addr); err != nil {
+			return nil, err
+		}
+
+		results = append(results, addr)
+	}
+
+	return results, rows.Err()
 }

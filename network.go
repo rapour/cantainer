@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -234,6 +235,24 @@ func AddVethToNamespace(namespace string, vethName string) error {
 
 	return nil
 
+}
+
+func AssignAddressToNamespace(namespace string, address netip.Addr) error {
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/assign-ip-to-namespace.sh %s %s`, namespace, address.String()))
+
+	var stdErr, stdOut bytes.Buffer
+
+	checkCmd.Stderr = &stdErr
+	checkCmd.Stdout = &stdOut
+
+	if err := checkCmd.Run(); err != nil {
+		errStr := strings.TrimSuffix(stdErr.String(), "\n")
+		return fmt.Errorf("error assigning ip to namespace: %v [%s]", err, errStr)
+	}
+
+	slog.Info(strings.TrimSuffix(stdOut.String(), "\n"))
+
+	return nil
 }
 
 func ConnectNetworkNamespaceToBridge(namespace string, bridgeName string) error {
