@@ -28,7 +28,7 @@ func NewHTTP(core *core) *HTTP {
 		core:   core,
 	}
 
-	mux.HandleFunc("GET /ip", controller.NetworkIP)
+	mux.HandleFunc("POST /register", controller.NetworkIP)
 
 	return &controller
 }
@@ -64,6 +64,7 @@ func (h *HTTP) NetworkIP(w http.ResponseWriter, r *http.Request) {
 
 	var request RegisterContainerHTTPRequest
 	if err := dec.Decode(&request); err != nil {
+
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -71,10 +72,10 @@ func (h *HTTP) NetworkIP(w http.ResponseWriter, r *http.Request) {
 	addr, err := h.core.RegisterContainer(context.Background(), &request.Network)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(RegisterContainerHTTPResponse{Address: addr}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

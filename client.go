@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"net/netip"
 	"time"
@@ -27,17 +29,19 @@ func NewClient() *Client {
 
 func (c *Client) RegisterContainer(ctx context.Context, network *netip.Prefix) (netip.Addr, error) {
 
+	url := fmt.Sprintf("%s/register", c.Address)
+
 	reqBody := RegisterContainerHTTPRequest{
 		Network: *network,
 	}
 
-	var buf *bytes.Buffer
-	err := json.NewEncoder(buf).Encode(reqBody)
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(reqBody)
 	if err != nil {
 		return netip.Addr{}, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Address, buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
 	if err != nil {
 		return netip.Addr{}, err
 	}
@@ -48,8 +52,18 @@ func (c *Client) RegisterContainer(ctx context.Context, network *netip.Prefix) (
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return netip.Addr{}, err
+		}
+
+		return netip.Addr{}, fmt.Errorf("daemon responsed with [code: %v]: %v", resp.StatusCode, string(body))
+	}
+
 	var response RegisterContainerHTTPResponse
-	if err := json.NewDecoder(req.Body).Decode(&resp); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return netip.Addr{}, err
 	}
 

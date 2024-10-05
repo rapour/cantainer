@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"net/netip"
 	"os"
@@ -17,7 +18,7 @@ var (
 func init() {
 	rootCmd.AddCommand(newCmd)
 
-	daemonCmd.Flags().IPNetVarP(&network, "network", "n", net.IPNet{}, "network CIDR to attach the container, if empty, container will not be able to reach other containers in the overlay network")
+	newCmd.Flags().IPNetVarP(&network, "network", "n", net.IPNet{}, "network CIDR to attach the container, if empty, container will not be able to reach other containers in the overlay network")
 
 }
 
@@ -39,6 +40,9 @@ var newCmd = &cobra.Command{
 		}
 
 		if network.IP != nil {
+
+			slog.Info("registering container on the network", slog.String("network", network.String()))
+
 			netIP, err := netip.ParsePrefix(network.String())
 			if err != nil {
 				panic(err)
@@ -49,7 +53,9 @@ var newCmd = &cobra.Command{
 				panic(err)
 			}
 
-			err = cantainer.AssignAddressToNamespace(cName, address)
+			prefix := netip.PrefixFrom(address, netIP.Bits())
+
+			err = cantainer.AssignNetworkToNamespace(cName, prefix)
 			if err != nil {
 				panic(err)
 			}
@@ -57,6 +63,5 @@ var newCmd = &cobra.Command{
 
 		cantainer.Extract(tempDir)
 		cantainer.NewContainer(cName, tempDir, "/bin/busybox", "/bin/ash")
-
 	},
 }

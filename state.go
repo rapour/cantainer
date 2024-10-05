@@ -100,7 +100,7 @@ func (s *state) Shutdown(ctx context.Context) error {
 
 func (s *state) RegisterContainer(address *netip.Addr) error {
 
-	_, err := s.db.Exec("INSERT INTO containers VALUES (?, ?);", address, s.socket.ExtendedAddress())
+	_, err := s.db.Exec("INSERT INTO containers VALUES (?, ?);", address.String(), s.socket.ExtendedAddress())
 
 	return err
 }
@@ -156,8 +156,13 @@ func (s *state) Containers() ([]netip.Addr, error) {
 
 	results := []netip.Addr{}
 	for rows.Next() {
-		var addr netip.Addr
-		if err := rows.Scan(&addr); err != nil {
+		var addrStr string
+		if err := rows.Scan(&addrStr); err != nil {
+			return nil, err
+		}
+
+		addr, err := netip.ParseAddr(addrStr)
+		if err != nil {
 			return nil, err
 		}
 

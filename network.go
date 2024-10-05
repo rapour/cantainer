@@ -12,6 +12,10 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+func VethNameFronNamespace(namespace string) string {
+	return namespace
+}
+
 type NsHandle int
 
 const bindMountPath = "/run/netns" /* Bind mount path for named netns */
@@ -237,8 +241,8 @@ func AddVethToNamespace(namespace string, vethName string) error {
 
 }
 
-func AssignAddressToNamespace(namespace string, address netip.Addr) error {
-	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/assign-ip-to-namespace.sh %s %s`, namespace, address.String()))
+func AssignNetworkToNamespace(namespace string, prefix netip.Prefix) error {
+	checkCmd := exec.Command(`bash`, `-c`, fmt.Sprintf(`scripts/assign-net-to-namespace.sh %s %s %s`, namespace, VethNameFronNamespace(namespace), prefix.String()))
 
 	var stdErr, stdOut bytes.Buffer
 
@@ -257,7 +261,7 @@ func AssignAddressToNamespace(namespace string, address netip.Addr) error {
 
 func ConnectNetworkNamespaceToBridge(namespace string, bridgeName string) error {
 
-	vethName := fmt.Sprintf("%s", namespace)
+	vethName := VethNameFronNamespace(namespace)
 
 	if err := CreateVethPair(vethName); err != nil {
 		return err
